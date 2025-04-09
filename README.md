@@ -17,5 +17,5 @@ This plugin allowes defuse the bomb by cut wires (1 - green, 2- yellow, 3 - red,
 
 ---
 # installation:  
-Extract the `addons` folder to the `/csgo/` directory of the dedicated server.  
+Extract the folder to the `...\csgo\addons\counterstrikesharp\plugins\QuickDefuse\` directory of the dedicated server.
 

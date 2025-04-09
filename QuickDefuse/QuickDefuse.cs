@@ -12,7 +12,7 @@ namespace QuickDefuse
         public override string ModuleName => "QuickDefuse";
         public override string ModuleVersion => "1.0";
         public override string ModuleAuthor => "Sinistral";
-        public override string ModuleDescription => "Allowes defuse the bomb by cut the right wire";
+        public override string ModuleDescription => "Allows you to defuse the bomb by cutting the correct wire.";
 
         public string PluginPrefix = $"[QuickDefuse]";
         private static Wire _rightWire = Wire.NotDefined;
@@ -43,6 +43,7 @@ namespace QuickDefuse
             RegisterEventHandler<EventBombAbortplant>(OnBombAbortPlant);
             RegisterEventHandler<EventRoundEnd>(OnRoundEnd);
             RegisterEventHandler<EventRoundStart>(OnRoundStart);
+            RegisterEventHandler<EventPlayerChat>(OnPlayerChat);
 
             AddCommandListener("1", OnKeyPressDefuse);
             AddCommandListener("2", OnKeyPressDefuse);
@@ -81,7 +82,7 @@ namespace QuickDefuse
 
             if (@event?.Text.Trim().ToLower() == "!quickdefuse")
             {
-                player?.PrintToChat("For quick defuse, you need to bind a key, for example: if you want to cut wire 1 with the K key, type this in the console: bind k \"1\"");
+                player?.PrintToChat("To defuse quickly, bind a key. For example, to cut wire 3 with the K key, type: bind k \"3\"");
                 return HookResult.Handled;
             }
 
@@ -91,7 +92,7 @@ namespace QuickDefuse
         private void ShowSelectionMenu(CCSPlayerController player, bool isPlant)
         {
             int menuTimeoutSec = 10;
-            var menu = new CenterHtmlMenu($"Choose a wire ({menuTimeoutSec}s)", this);
+            var menu = new CenterHtmlMenu($"Choose a wire in {menuTimeoutSec}s", this);
 
             menu.AddMenuOption(Wire.Green.ToString(), isPlant ? GreenPlantAction : GreenDefuseAction);
             menu.AddMenuOption(Wire.Yellow.ToString(), isPlant ? YellowPlantAction : YellowDefuseAction);
@@ -104,7 +105,7 @@ namespace QuickDefuse
             {
                 for (int i = menuTimeoutSec; i > 0; --i)
                 {
-                    menu.Title = $"Choose a wire ({i}s)";
+                    menu.Title = $"Choose a wire in {i}s";
                     Task.Delay(1000).Wait();
                 }
                 MenuManager.CloseActiveMenu(player);
@@ -159,7 +160,7 @@ namespace QuickDefuse
 
         private HookResult OnBombPlantedCommand(EventBombPlanted @event, GameEventInfo info)
         {
-            Server.PrintToChatAll($"The bomb can be defused by cutting the right wire (1-4).");
+            Server.PrintToChatAll($"The bomb can be defused by cutting the correct wire (1-4).");
             return HookResult.Continue;
         }
 
@@ -181,14 +182,14 @@ namespace QuickDefuse
         {
             _rightWire = Wire.Red;
             MenuManager.CloseActiveMenu(player);
-            player.PrintToChat($"You chose {_rightWire} !");
+            player.PrintToChat($"You chose {_rightWire}!");
         }
 
         private static void BluePlantAction(CCSPlayerController player, ChatMenuOption option)
         {
             _rightWire = Wire.Blue;
             MenuManager.CloseActiveMenu(player);
-            player.PrintToChat($"You chose {_rightWire} !");
+            player.PrintToChat($"You chose {_rightWire}!");
         }
 
         private static void RandomPlantAction(CCSPlayerController player, ChatMenuOption option)
@@ -215,7 +216,6 @@ namespace QuickDefuse
         #endregion
 
         #region Defuse
-
         private HookResult OnBombAbortDefuse(EventBombAbortdefuse @event, GameEventInfo info)
         {
             var player = @event.Userid;
@@ -343,11 +343,7 @@ namespace QuickDefuse
 
             return plantedBombList.FirstOrDefault();
         }
-
         #endregion
-
-
-
 
     }
 }
