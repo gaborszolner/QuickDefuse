@@ -160,7 +160,7 @@ namespace QuickDefuse
 
         private HookResult OnBombPlantedCommand(EventBombPlanted @event, GameEventInfo info)
         {
-            Server.PrintToChatAll($"The bomb can be defused by cutting the correct wire (1-4).");
+            Server.PrintToChatAll($"The bomb can be defused by cutting the correct wire. For help type !quickdefuse.");
             return HookResult.Continue;
         }
 
