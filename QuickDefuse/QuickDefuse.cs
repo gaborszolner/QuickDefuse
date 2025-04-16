@@ -87,7 +87,9 @@ namespace QuickDefuse
 
             if (@event?.Text.Trim().ToLower() == "!quickdefuse")
             {
-                player?.PrintToChat("To defuse quickly, bind a key. \nFor example, to cut wire 3 with the K key, type: bind k \"3\"");
+                player?.PrintToChat("To defuse immediately, bind a key.");
+                player?.PrintToChat("For example, to cut wire 3 with the K key, type: bind k \"3\"");
+
                 return HookResult.Handled;
             }
             else if (@event?.Text.Trim().ToLower() == "!thetime")
@@ -181,7 +183,9 @@ namespace QuickDefuse
 
         private HookResult OnBombPlantedCommand(EventBombPlanted @event, GameEventInfo info)
         {
-            Server.PrintToChatAll($"The bomb can be defused by cutting the correct wire.\nFor help type !quickdefuse.");
+            Server.PrintToChatAll($"The bomb can be defused by cutting the correct wire.");
+            Server.PrintToChatAll($"For help type !quickdefuse.");
+            
             return HookResult.Continue;
         }
 
