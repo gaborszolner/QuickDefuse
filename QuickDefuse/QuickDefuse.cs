@@ -92,11 +92,6 @@ namespace QuickDefuse
 
                 return HookResult.Handled;
             }
-            else if (@event?.Text.Trim().ToLower() == "!thetime")
-            {
-                player?.PrintToChat($"{DateTime.Now}");
-                return HookResult.Handled;
-            }
 
             return HookResult.Continue;
         }
