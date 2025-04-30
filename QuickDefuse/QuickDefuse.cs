@@ -147,6 +147,7 @@ namespace QuickDefuse
 
         private HookResult OnBombBeginplant(EventBombBeginplant @event, GameEventInfo info)
         {
+            _rightWire = (Wire)new Random().Next(1, 5);
             var player = @event.Userid;
             if (player == null || !player.IsValid)
                 return HookResult.Continue;
