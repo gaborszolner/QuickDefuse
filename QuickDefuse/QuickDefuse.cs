@@ -235,7 +235,6 @@ namespace QuickDefuse
 
             planterPlayer = null;
             playerPlantAlreadyChosen = false;
-            _rightWire = Wire.NotDefined;
             MenuManager.GetActiveMenu(player)?.Close();
 
             return HookResult.Continue;
