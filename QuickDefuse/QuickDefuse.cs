@@ -21,8 +21,11 @@ namespace QuickDefuse
         private static Wire _triedWire = Wire.NotDefined;
         private static CPlantedC4? plantedBomb;
         private static CCSPlayerController? planterPlayer = null;
+        private static CCSPlayerController? defuserPlayer = null;
         private static bool playerPlantAlreadyChosen = false;
         private static bool playerDefuseAlreadyChosen = false;
+        private const bool usedWithAdminMenu = true; // TODO move it to a config file
+
         enum Wire
         {
             NotDefined = 0,
@@ -44,21 +47,53 @@ namespace QuickDefuse
             RegisterEventHandler<EventBombPlanted>(OnBombPlantedCommand);
             RegisterEventHandler<EventBombBeginplant>(OnBombBeginplant);
             RegisterEventHandler<EventBombAbortplant>(OnBombAbortPlant);
-            RegisterEventHandler<EventRoundEnd>(OnRoundEnd);
+            RegisterEventHandler<EventBombExploded>(OnBombExploded);
+            RegisterEventHandler<EventBombDefused>(OnBombDefused);
             RegisterEventHandler<EventRoundStart>(OnRoundStart);
             RegisterEventHandler<EventPlayerChat>(OnPlayerChat);
 
-            AddCommandListener("1", OnKeyPressDefuse);
-            AddCommandListener("2", OnKeyPressDefuse);
-            AddCommandListener("3", OnKeyPressDefuse);
-            AddCommandListener("4", OnKeyPressDefuse);
-            AddCommandListener("5", OnKeyPressDefuse);
+            if (!usedWithAdminMenu)
+            {
+                AddCommandListener("1", OnKeyPressDefuse);
+                AddCommandListener("2", OnKeyPressDefuse);
+                AddCommandListener("3", OnKeyPressDefuse);
+                AddCommandListener("4", OnKeyPressDefuse);
+                AddCommandListener("5", OnKeyPressDefuse);
 
-            AddCommandListener("1", OnKeyPressPlant);
-            AddCommandListener("2", OnKeyPressPlant);
-            AddCommandListener("3", OnKeyPressPlant);
-            AddCommandListener("4", OnKeyPressPlant);
-            AddCommandListener("5", OnKeyPressPlant);
+                AddCommandListener("1", OnKeyPressPlant);
+                AddCommandListener("2", OnKeyPressPlant);
+                AddCommandListener("3", OnKeyPressPlant);
+                AddCommandListener("4", OnKeyPressPlant);
+                AddCommandListener("5", OnKeyPressPlant);
+            }
+        }
+
+        private HookResult OnBombDefused(EventBombDefused @event, GameEventInfo info)
+        {
+            if (planterPlayer is not null)
+            {
+                MenuManager.GetActiveMenu(planterPlayer)?.Close();
+            }
+            if (defuserPlayer is not null)
+            {
+                MenuManager.GetActiveMenu(defuserPlayer)?.Close();
+            }
+
+            return HookResult.Continue;
+        }
+
+        private HookResult OnBombExploded(EventBombExploded @event, GameEventInfo info)
+        {
+            if (planterPlayer is not null) 
+            {
+                MenuManager.GetActiveMenu(planterPlayer)?.Close(); 
+            }
+            if (defuserPlayer is not null)
+            {
+                MenuManager.GetActiveMenu(defuserPlayer)?.Close();
+            }
+
+            return HookResult.Continue;
         }
 
         private HookResult OnRoundStart(EventRoundStart @event, GameEventInfo info)
@@ -66,18 +101,9 @@ namespace QuickDefuse
             _rightWire = (Wire)new Random().Next(1, 5);
             plantedBomb = null;
             planterPlayer = null;
+            defuserPlayer = null;
             playerDefuseAlreadyChosen = false;
             playerPlantAlreadyChosen = false;
-            return HookResult.Continue;
-        }
-
-        private HookResult OnRoundEnd(EventRoundEnd @event, GameEventInfo info)
-        {
-            foreach (var item in MenuManager.GetActiveMenus())
-            {
-                item.Value.Close();
-            }
-
             return HookResult.Continue;
         }
 
@@ -126,21 +152,14 @@ namespace QuickDefuse
 
         private static char GetChatColor(Wire rightWire)
         {
-            switch (rightWire)
+            return rightWire switch
             {
-                case Wire.Green:
-                    return ChatColors.Green;
-                case Wire.Yellow:
-                    return ChatColors.Yellow;
-                case Wire.Red:
-                    return ChatColors.Red;
-                case Wire.Blue:
-                    return ChatColors.Blue;
-                case Wire.NotDefined:
-                case Wire.Random:
-                default:
-                    return ChatColors.Default;
-            }
+                Wire.Green => ChatColors.Green,
+                Wire.Yellow => ChatColors.Yellow,
+                Wire.Red => ChatColors.Red,
+                Wire.Blue => ChatColors.Blue,
+                _ => ChatColors.Default,
+            };
         }
 
         #region Plant
@@ -250,6 +269,7 @@ namespace QuickDefuse
                 return HookResult.Continue;
 
             _triedWire = Wire.NotDefined;
+            defuserPlayer = null;
             playerDefuseAlreadyChosen = false;
             MenuManager.GetActiveMenu(player)?.Close();
 
@@ -264,7 +284,7 @@ namespace QuickDefuse
             }
 
             var player = @event.Userid;
-
+            defuserPlayer = player;
             plantedBomb = FindPlantedBomb();
             if (plantedBomb is null)
             {
