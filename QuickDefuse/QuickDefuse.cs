@@ -2,10 +2,7 @@
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Menu;
 using Microsoft.Extensions.Logging;
-using CounterStrikeSharp.API.Modules.Commands;
-using CounterStrikeSharp.API.Modules.Events;
 using CounterStrikeSharp.API.Modules.Utils;
-using System.Drawing;
 
 namespace QuickDefuse
 {
@@ -14,7 +11,7 @@ namespace QuickDefuse
         public override string ModuleName => "QuickDefuse";
         public override string ModuleVersion => "1.0";
         public override string ModuleAuthor => "Sinistral";
-        public override string ModuleDescription => "Allows you to defuse the bomb by cutting the correct wire.";
+        public override string ModuleDescription => "Allows you to defuse the bomb by cutting the correct wire. Use with MenuHotKey plugin, to choose menu options quikly";
 
         public string PluginPrefix = $"[QuickDefuse]";
         private static Wire _rightWire = Wire.NotDefined;
@@ -22,9 +19,6 @@ namespace QuickDefuse
         private static CPlantedC4? plantedBomb;
         private static CCSPlayerController? planterPlayer = null;
         private static CCSPlayerController? defuserPlayer = null;
-        private static bool playerPlantAlreadyChosen = false;
-        private static bool playerDefuseAlreadyChosen = false;
-        private const bool usedWithAdminMenu = true; // TODO move it to a config file
 
         enum Wire
         {
@@ -50,22 +44,6 @@ namespace QuickDefuse
             RegisterEventHandler<EventBombExploded>(OnBombExploded);
             RegisterEventHandler<EventBombDefused>(OnBombDefused);
             RegisterEventHandler<EventRoundStart>(OnRoundStart);
-            RegisterEventHandler<EventPlayerChat>(OnPlayerChat);
-
-            if (!usedWithAdminMenu)
-            {
-                AddCommandListener("1", OnKeyPressDefuse);
-                AddCommandListener("2", OnKeyPressDefuse);
-                AddCommandListener("3", OnKeyPressDefuse);
-                AddCommandListener("4", OnKeyPressDefuse);
-                AddCommandListener("5", OnKeyPressDefuse);
-
-                AddCommandListener("1", OnKeyPressPlant);
-                AddCommandListener("2", OnKeyPressPlant);
-                AddCommandListener("3", OnKeyPressPlant);
-                AddCommandListener("4", OnKeyPressPlant);
-                AddCommandListener("5", OnKeyPressPlant);
-            }
         }
 
         private HookResult OnBombDefused(EventBombDefused @event, GameEventInfo info)
@@ -102,23 +80,6 @@ namespace QuickDefuse
             plantedBomb = null;
             planterPlayer = null;
             defuserPlayer = null;
-            playerDefuseAlreadyChosen = false;
-            playerPlantAlreadyChosen = false;
-            return HookResult.Continue;
-        }
-
-        public static HookResult OnPlayerChat(EventPlayerChat @event, GameEventInfo info)
-        {
-            var player = Utilities.GetPlayerFromUserid(@event.Userid);
-
-            if (@event?.Text.Trim().ToLower() == "!quickdefuse")
-            {
-                player?.PrintToChat("To defuse immediately, bind a key.");
-                player?.PrintToChat("For example, to cut wire 3 with the K key, type: bind k \"3\"");
-
-                return HookResult.Handled;
-            }
-
             return HookResult.Continue;
         }
 
@@ -175,24 +136,6 @@ namespace QuickDefuse
 
             ShowSelectionMenu(player, true);
 
-            return HookResult.Continue;
-        }
-
-        private HookResult OnKeyPressPlant(CCSPlayerController? player, CommandInfo command)
-        {
-            if (player is not null && planterPlayer is not null && player == planterPlayer && !playerPlantAlreadyChosen)
-            {
-                playerPlantAlreadyChosen = true;
-                switch (command.GetCommandString)
-                {
-                    case "1": GreenPlantAction(player, null); break;
-                    case "2": YellowPlantAction(player, null); break;
-                    case "3": RedPlantAction(player, null); break;
-                    case "4": BluePlantAction(player, null); break;
-                    case "5": RandomPlantAction(player, null); break;
-                    default: RandomPlantAction(player, null); break;
-                }
-            }
             return HookResult.Continue;
         }
 
@@ -253,7 +196,6 @@ namespace QuickDefuse
                 return HookResult.Continue;
 
             planterPlayer = null;
-            playerPlantAlreadyChosen = false;
             MenuManager.GetActiveMenu(player)?.Close();
 
             return HookResult.Continue;
@@ -270,7 +212,6 @@ namespace QuickDefuse
 
             _triedWire = Wire.NotDefined;
             defuserPlayer = null;
-            playerDefuseAlreadyChosen = false;
             MenuManager.GetActiveMenu(player)?.Close();
 
             return HookResult.Continue;
@@ -292,25 +233,6 @@ namespace QuickDefuse
             }
 
             ShowSelectionMenu(player, false);
-
-            return HookResult.Continue;
-        }
-
-        private HookResult OnKeyPressDefuse(CCSPlayerController? player, CommandInfo command)
-        {
-            if (player is not null && plantedBomb is not null && plantedBomb.BeingDefused && plantedBomb.BombDefuser == player.Pawn && !playerDefuseAlreadyChosen)
-            {
-                playerDefuseAlreadyChosen = true;
-
-                switch (command.GetCommandString)
-                {
-                    case "1": CutBombWire(Wire.Green); break;
-                    case "2": CutBombWire(Wire.Yellow); break;
-                    case "3": CutBombWire(Wire.Red); break;
-                    case "4": CutBombWire(Wire.Blue); break;
-                    case "5": CutBombWire((Wire)new Random().Next(1, 5));  break;
-                }
-            }
 
             return HookResult.Continue;
         }
