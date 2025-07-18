@@ -32,12 +32,8 @@ namespace QuickDefuse
 
         public override void Load(bool hotReload)
         {
-            Logger?.LogInformation($"Plugin: {ModuleName} - Version: {ModuleVersion} by {ModuleAuthor}");
-            Logger?.LogInformation(ModuleDescription);
-
             RegisterEventHandler<EventBombBegindefuse>(OnBombBeginDefuse);
             RegisterEventHandler<EventBombAbortdefuse>(OnBombAbortDefuse);
-
             RegisterEventHandler<EventBombPlanted>(OnBombPlantedCommand);
             RegisterEventHandler<EventBombBeginplant>(OnBombBeginplant);
             RegisterEventHandler<EventBombAbortplant>(OnBombAbortPlant);
@@ -107,7 +103,6 @@ namespace QuickDefuse
                 {
                     player.PrintToChat($"You chose {_rightWire}!");
                 }
-
             });
         }
 
@@ -226,6 +221,7 @@ namespace QuickDefuse
 
             var player = @event.Userid;
             defuserPlayer = player;
+            _triedWire = Wire.NotDefined;
             plantedBomb = FindPlantedBomb();
             if (plantedBomb is null)
             {
@@ -239,27 +235,42 @@ namespace QuickDefuse
 
         private static void GreenDefuseAction(CCSPlayerController player, ChatMenuOption option)
         {
-            CutBombWire(Wire.Green);
+            if (_triedWire is Wire.NotDefined)
+            {
+                CutBombWire(Wire.Green); 
+            }
         }
 
         private static void YellowDefuseAction(CCSPlayerController player, ChatMenuOption option)
         {
-            CutBombWire(Wire.Yellow);
+            if (_triedWire is Wire.NotDefined)
+            {
+                CutBombWire(Wire.Yellow);
+            }
         }
 
         private static void RedDefuseAction(CCSPlayerController player, ChatMenuOption option)
         {
-            CutBombWire(Wire.Red);
+            if (_triedWire is Wire.NotDefined)
+            {
+                CutBombWire(Wire.Red);
+            }
         }
 
         private static void BlueDefuseAction(CCSPlayerController player, ChatMenuOption option)
         {
-            CutBombWire(Wire.Blue);
+            if (_triedWire is Wire.NotDefined)
+            {
+                CutBombWire(Wire.Blue);
+            }
         }
 
         private static void RandomDefuseAction(CCSPlayerController player, ChatMenuOption option)
         {
-            CutBombWire((Wire)new Random().Next(1, 5));
+            if (_triedWire is Wire.NotDefined)
+            {
+                CutBombWire((Wire)new Random().Next(1, 5));
+            }
         }
 
         private static void CutBombWire(Wire triedWire)
