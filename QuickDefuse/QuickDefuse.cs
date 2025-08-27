@@ -1,7 +1,6 @@
 ﻿using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Menu;
-using Microsoft.Extensions.Logging;
 using CounterStrikeSharp.API.Modules.Utils;
 
 namespace QuickDefuse
@@ -16,9 +15,9 @@ namespace QuickDefuse
         public string PluginPrefix = $"[QuickDefuse]";
         private static Wire _rightWire = Wire.NotDefined;
         private static Wire _triedWire = Wire.NotDefined;
-        private static CPlantedC4? plantedBomb;
-        private static CCSPlayerController? planterPlayer = null;
-        private static CCSPlayerController? defuserPlayer = null;
+        private static CPlantedC4? _plantedBomb;
+        private static CCSPlayerController? _planterPlayer = null;
+        private static CCSPlayerController? _defuserPlayer = null;
 
         enum Wire
         {
@@ -44,38 +43,45 @@ namespace QuickDefuse
 
         private HookResult OnBombDefused(EventBombDefused @event, GameEventInfo info)
         {
-            if (planterPlayer is not null)
+            if (_planterPlayer is not null)
             {
-                MenuManager.GetActiveMenu(planterPlayer)?.Close();
+                MenuManager.GetActiveMenu(_planterPlayer)?.Close();
             }
-            if (defuserPlayer is not null)
+            if (_defuserPlayer is not null)
             {
-                MenuManager.GetActiveMenu(defuserPlayer)?.Close();
+                MenuManager.GetActiveMenu(_defuserPlayer)?.Close();
             }
-
             return HookResult.Continue;
         }
 
         private HookResult OnBombExploded(EventBombExploded @event, GameEventInfo info)
         {
-            if (planterPlayer is not null) 
+            if (_planterPlayer is not null) 
             {
-                MenuManager.GetActiveMenu(planterPlayer)?.Close(); 
+                MenuManager.GetActiveMenu(_planterPlayer)?.Close(); 
             }
-            if (defuserPlayer is not null)
+            if (_defuserPlayer is not null)
             {
-                MenuManager.GetActiveMenu(defuserPlayer)?.Close();
+                MenuManager.GetActiveMenu(_defuserPlayer)?.Close();
             }
-
             return HookResult.Continue;
         }
 
         private HookResult OnRoundStart(EventRoundStart @event, GameEventInfo info)
         {
             _rightWire = (Wire)new Random().Next(1, 5);
-            plantedBomb = null;
-            planterPlayer = null;
-            defuserPlayer = null;
+            _plantedBomb = null;
+            _planterPlayer = null;
+            _defuserPlayer = null;
+
+            if (_planterPlayer is not null)
+            {
+                MenuManager.GetActiveMenu(_planterPlayer)?.Close();
+            }
+            if (_defuserPlayer is not null)
+            {
+                MenuManager.GetActiveMenu(_defuserPlayer)?.Close();
+            }
             return HookResult.Continue;
         }
 
@@ -127,7 +133,7 @@ namespace QuickDefuse
             if (player == null || !player.IsValid)
                 return HookResult.Continue;
 
-            planterPlayer = player;
+            _planterPlayer = player;
 
             ShowSelectionMenu(player, true);
 
@@ -136,9 +142,7 @@ namespace QuickDefuse
 
         private HookResult OnBombPlantedCommand(EventBombPlanted @event, GameEventInfo info)
         {
-            Server.PrintToChatAll($"The bomb can be defused by cutting the correct wire.");
-            Server.PrintToChatAll($"For help type !quickdefuse.");
-            
+            Server.PrintToChatAll($"The bomb can be defused by cutting the correct wire.");           
             return HookResult.Continue;
         }
 
@@ -186,11 +190,14 @@ namespace QuickDefuse
 
         private HookResult OnBombAbortPlant(EventBombAbortplant @event, GameEventInfo info)
         {
+            _planterPlayer = null;
+
             var player = @event.Userid;
             if (player == null || !player.IsValid)
+            {
                 return HookResult.Continue;
+            }
 
-            planterPlayer = null;
             MenuManager.GetActiveMenu(player)?.Close();
 
             return HookResult.Continue;
@@ -206,7 +213,7 @@ namespace QuickDefuse
                 return HookResult.Continue;
 
             _triedWire = Wire.NotDefined;
-            defuserPlayer = null;
+            _defuserPlayer = null;
             MenuManager.GetActiveMenu(player)?.Close();
 
             return HookResult.Continue;
@@ -220,10 +227,10 @@ namespace QuickDefuse
             }
 
             var player = @event.Userid;
-            defuserPlayer = player;
+            _defuserPlayer = player;
             _triedWire = Wire.NotDefined;
-            plantedBomb = FindPlantedBomb();
-            if (plantedBomb is null)
+            _plantedBomb = FindPlantedBomb();
+            if (_plantedBomb is null)
             {
                 return HookResult.Continue;
             }
@@ -275,7 +282,7 @@ namespace QuickDefuse
 
         private static void CutBombWire(Wire triedWire)
         {
-            if (plantedBomb is null)
+            if (_plantedBomb is null)
             {
                 return;
             }
@@ -286,25 +293,24 @@ namespace QuickDefuse
                 Server.NextFrame(() =>
                 {
                     Server.PrintToChatAll($"Bomb has been defused by cutting the right {GetChatColor(_rightWire)}{_rightWire}{ChatColors.Default} wire!");
-                    plantedBomb.DefuseCountDown = 0;
-                    plantedBomb.BombDefused = true;
+                    _plantedBomb.DefuseCountDown = 0;
+                    _plantedBomb.BombDefused = true;
                 });
             }
             else
             {
                 Server.PrintToChatAll($"Tried wire was {GetChatColor(_triedWire)}{_triedWire}{ChatColors.Default}, but the right wire was {GetChatColor(_rightWire)}{_rightWire}{ChatColors.Default}");
-                plantedBomb.CannotBeDefused = true;
-                plantedBomb.C4Blow = 1;
+                _plantedBomb.CannotBeDefused = true;
+                _plantedBomb.C4Blow = 1;
             }
         }
 
-        private CPlantedC4? FindPlantedBomb()
+        private static CPlantedC4? FindPlantedBomb()
         {
             var plantedBombList = Utilities.FindAllEntitiesByDesignerName<CPlantedC4>("planted_c4");
 
             if (!plantedBombList.Any())
             {
-                Logger?.LogWarning("No planted bomb entities have been found!");
                 return null;
             }
 
