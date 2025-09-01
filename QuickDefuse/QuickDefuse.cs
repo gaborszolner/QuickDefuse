@@ -71,16 +71,16 @@ namespace QuickDefuse
         {
             _rightWire = (Wire)new Random().Next(1, 5);
             _plantedBomb = null;
-            _planterPlayer = null;
-            _defuserPlayer = null;
 
             if (_planterPlayer is not null)
             {
                 MenuManager.GetActiveMenu(_planterPlayer)?.Close();
+                _planterPlayer = null;
             }
             if (_defuserPlayer is not null)
             {
                 MenuManager.GetActiveMenu(_defuserPlayer)?.Close();
+                _defuserPlayer = null;
             }
             return HookResult.Continue;
         }
