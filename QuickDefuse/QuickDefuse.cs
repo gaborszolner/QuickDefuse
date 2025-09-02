@@ -18,6 +18,7 @@ namespace QuickDefuse
         private static CPlantedC4? _plantedBomb;
         private static CCSPlayerController? _planterPlayer = null;
         private static CCSPlayerController? _defuserPlayer = null;
+        private static bool _isRoundEnded = false;
 
         enum Wire
         {
@@ -39,6 +40,13 @@ namespace QuickDefuse
             RegisterEventHandler<EventBombExploded>(OnBombExploded);
             RegisterEventHandler<EventBombDefused>(OnBombDefused);
             RegisterEventHandler<EventRoundStart>(OnRoundStart);
+            RegisterEventHandler<EventRoundEnd>(OnRoundEnd);
+        }
+
+        private HookResult OnRoundEnd(EventRoundEnd @event, GameEventInfo info)
+        {
+            _isRoundEnded = true;
+            return HookResult.Continue;
         }
 
         private HookResult OnBombDefused(EventBombDefused @event, GameEventInfo info)
@@ -51,6 +59,7 @@ namespace QuickDefuse
             {
                 MenuManager.GetActiveMenu(_defuserPlayer)?.Close();
             }
+            _isRoundEnded = true;
             return HookResult.Continue;
         }
 
@@ -64,6 +73,7 @@ namespace QuickDefuse
             {
                 MenuManager.GetActiveMenu(_defuserPlayer)?.Close();
             }
+            _isRoundEnded = true;
             return HookResult.Continue;
         }
 
@@ -71,22 +81,20 @@ namespace QuickDefuse
         {
             _rightWire = (Wire)new Random().Next(1, 5);
             _plantedBomb = null;
+            _planterPlayer = null;
+            _defuserPlayer = null;
+            _isRoundEnded = false;
 
-            if (_planterPlayer is not null)
-            {
-                MenuManager.GetActiveMenu(_planterPlayer)?.Close();
-                _planterPlayer = null;
-            }
-            if (_defuserPlayer is not null)
-            {
-                MenuManager.GetActiveMenu(_defuserPlayer)?.Close();
-                _defuserPlayer = null;
-            }
             return HookResult.Continue;
         }
 
         private void ShowSelectionMenu(CCSPlayerController player, bool isPlant)
         {
+            if (_isRoundEnded && isPlant)
+            {
+                return;
+            }
+
             int menuTimeoutSec = 10;
             var menu = new CenterHtmlMenu($"Choose a wire in {menuTimeoutSec}s", this);
 
